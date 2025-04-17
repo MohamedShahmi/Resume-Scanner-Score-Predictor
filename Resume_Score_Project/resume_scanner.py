@@ -4,7 +4,7 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import docx
 import PyPDF2
-from style import * 
+from style import *  # Importing color and style settings from the style file
 
 # Function to extract text from PDF or DOCX
 def extract_text_from_file(file_path):
@@ -33,13 +33,21 @@ def calculate_score(text):
 # Function triggered on Upload button
 def upload_file():
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
-    if file_path:
-        text = extract_text_from_file(file_path)
-        if text:
-            score = calculate_score(text)
-            score_label.config(text=f"Resume Score: {score}/100", fg="green")
-        else:
-            score_label.config(text="Could not read content from file.", fg="red")
+    
+    if not file_path:
+        return
+    
+    # Check if the file is PDF or DOCX
+    if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
+        messagebox.showerror("Invalid File Type", "Please upload only PDF or DOCX files.")
+        return
+    
+    text = extract_text_from_file(file_path)
+    if text:
+        score = calculate_score(text)
+        score_label.config(text=f"Resume Score: {score}/100", fg=score_positive_color)
+    else:
+        score_label.config(text="Could not read content from file.", fg=error_color)
 
 # --- GUI Setup ---
 window = tk.Tk()
@@ -51,11 +59,10 @@ window.resizable(True, True)
 bg_image_path = r"D:\Projects\Resume-Scanner-Score-Predictor\Resume_Score_Project\resume.png"
 print(f"📂 Checking for image at: {bg_image_path}")
 
-bg_image_original = None
 bg_image_label = None
 
 def set_background_image(event=None):
-    global bg_image_original, bg_image_label
+    global bg_image_label
     if os.path.exists(bg_image_path):
         print("Image found, loading background...")
         bg_image = Image.open(bg_image_path)
@@ -79,16 +86,23 @@ window.bind("<Configure>", set_background_image)
 window.after(100, set_background_image)
 
 # Main UI content
-frame = tk.Frame(window, bg="#ffffff", bd=2)
+frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief, padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-title_label = tk.Label(frame, text="Upload Your Resume", font=label_font, bg="#ffffff", fg="#2c3e50")
-title_label.pack(pady=20)
+# Title label
+title_label = tk.Label(frame, text="Upload Your Resume", font=("Helvetica", 28, "bold"), fg="black")  # No bg color
+title_label.pack(pady=(20, 10))  # Close to the top, with some space
 
-upload_button = tk.Button(frame, text="Upload PDF or DOCX", command=upload_file, font=button_font, bg="#27ae60", fg="white")
+# Update button text to say "Upload Here"
+upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font, bg=button_color, fg="white", relief="raised", bd=5, width=20)
 upload_button.pack(pady=10)
 
-score_label = tk.Label(frame, text="", font=score_font, bg="#ffffff", fg="black")
+# Message to guide user about allowed file types
+file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Helvetica", 12), fg="gray", bg=frame_bg_color)
+file_type_message.pack(pady=(5, 20))
+
+# Score label
+score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color, fg=score_color)
 score_label.pack(pady=20)
 
 window.mainloop()
