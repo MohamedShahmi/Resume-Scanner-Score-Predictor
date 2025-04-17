@@ -1,88 +1,94 @@
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import os
-import pdfplumber
+from PIL import Image, ImageTk
 import docx
-from style import button_style, label_style, title_style, result_style, bg_color
+import PyPDF2
+from style import * 
 
-# Extract text from file
-def extract_text(filepath):
-    ext = os.path.splitext(filepath)[1].lower()
-
-    if ext == ".pdf":
-        try:
-            with pdfplumber.open(filepath) as pdf:
-                return '\n'.join(page.extract_text() for page in pdf.pages if page.extract_text())
-        except Exception as e:
-            return f"Error reading PDF: {e}"
-
-    elif ext == ".docx":
-        try:
-            doc = docx.Document(filepath)
-            return '\n'.join([p.text for p in doc.paragraphs])
-        except Exception as e:
-            return f"Error reading DOCX: {e}"
-    
-    return "Unsupported file type."
-
-# Score based on keywords
-def score_resume(text):
-    keywords = [
-        "python", "java", "sql", "api", "automation", "testing",
-        "jira", "selenium", "rest", "quality", "postman",
-        "unit test", "test case", "bug", "agile"
-    ]
-    score = sum(1 for kw in keywords if kw in text.lower())
-    total_score = int((score / len(keywords)) * 100)
-    return total_score
-
-# Generate improvement tips
-def generate_tips(score):
-    if score >= 90:
-        return "Excellent resume! You're showcasing all key skills."
-    elif score >= 60:
-        return "Good job! Try to highlight a few more QA or tech skills."
-    else:
-        return "Improve your resume with more relevant skills and tools."
-
-# Upload and analyze file
-def upload_file():
-    file_path = filedialog.askopenfilename(
-        filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")],
-        title="Select Resume File"
-    )
-    
-    if file_path:
-        result_label.config(text="Analyzing resume...")
-        root.update()
-        
-        text = extract_text(file_path)
-        if "Error" in text or "Unsupported" in text:
-            result_label.config(text="❌ " + text)
+# Function to extract text from PDF or DOCX
+def extract_text_from_file(file_path):
+    try:
+        if file_path.endswith(".pdf"):
+            with open(file_path, 'rb') as f:
+                reader = PyPDF2.PdfReader(f)
+                return ''.join(page.extract_text() for page in reader.pages)
+        elif file_path.endswith(".docx"):
+            doc = docx.Document(file_path)
+            return '\n'.join(paragraph.text for paragraph in doc.paragraphs)
         else:
-            score = score_resume(text)
-            tip = generate_tips(score)
-            result_label.config(text=f"✅ Resume Score: {score}/100\n\n💡 {tip}")
+            return None
+    except Exception as e:
+        print(f"Error reading file: {e}")
+        return None
 
-#GUI setup
-root = tk.Tk()
-root.title("Smart Resume Scanner")
-root.geometry("500x350")
-root.configure(bg=bg_color)  # Set background color
+# Function to calculate a dummy score
+def calculate_score(text):
+    if not text:
+        return 0
+    keywords = ["python", "java", "team", "project", "experience", "development", "qa", "test"]
+    score = sum(word.lower() in text.lower() for word in keywords)
+    return min(score * 10, 100)
 
-# Enable maximize option
-root.resizable(True, True)
+# Function triggered on Upload button
+def upload_file():
+    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
+    if file_path:
+        text = extract_text_from_file(file_path)
+        if text:
+            score = calculate_score(text)
+            score_label.config(text=f"Resume Score: {score}/100", fg="green")
+        else:
+            score_label.config(text="Could not read content from file.", fg="red")
 
-# Title Label
-title_label = tk.Label(root, text="Upload your resume (.pdf or .docx)", **title_style)
-title_label.pack()
+# --- GUI Setup ---
+window = tk.Tk()
+window.title("Resume Scanner & Score Predictor")
+window.geometry("800x500")
+window.resizable(True, True)
 
-# Upload Button
-upload_btn = tk.Button(root, text="Upload Resume", command=upload_file, **button_style)
-upload_btn.pack()
+# Load background image
+bg_image_path = r"D:\Projects\Resume-Scanner-Score-Predictor\Resume_Score_Project\resume.png"
+print(f"📂 Checking for image at: {bg_image_path}")
 
-# Result Label
-result_label = tk.Label(root, text="", **result_style)
-result_label.pack()
+bg_image_original = None
+bg_image_label = None
 
-root.mainloop()
+def set_background_image(event=None):
+    global bg_image_original, bg_image_label
+    if os.path.exists(bg_image_path):
+        print("Image found, loading background...")
+        bg_image = Image.open(bg_image_path)
+        bg_image = bg_image.resize((event.width, event.height))  # Resize based on window size
+        bg_image_tk = ImageTk.PhotoImage(bg_image)
+
+        if bg_image_label:
+            bg_image_label.config(image=bg_image_tk)
+            bg_image_label.image = bg_image_tk
+        else:
+            bg_image_label = tk.Label(window, image=bg_image_tk)
+            bg_image_label.place(x=0, y=0, relwidth=1, relheight=1)
+            bg_image_label.image = bg_image_tk
+        bg_image_label.lower()  
+    else:
+        print("❌ Image not found! Please check the path and file name.")
+
+# Bind resize event to update background
+window.bind("<Configure>", set_background_image)
+
+window.after(100, set_background_image)
+
+# Main UI content
+frame = tk.Frame(window, bg="#ffffff", bd=2)
+frame.place(relx=0.5, rely=0.5, anchor="center")
+
+title_label = tk.Label(frame, text="Upload Your Resume", font=label_font, bg="#ffffff", fg="#2c3e50")
+title_label.pack(pady=20)
+
+upload_button = tk.Button(frame, text="Upload PDF or DOCX", command=upload_file, font=button_font, bg="#27ae60", fg="white")
+upload_button.pack(pady=10)
+
+score_label = tk.Label(frame, text="", font=score_font, bg="#ffffff", fg="black")
+score_label.pack(pady=20)
+
+window.mainloop()
