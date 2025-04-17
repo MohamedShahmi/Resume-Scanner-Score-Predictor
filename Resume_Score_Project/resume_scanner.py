@@ -4,9 +4,44 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import docx
 import PyPDF2
-from style import *  # Importing color and style settings from the style file
+from style import *  
 
-# Function to extract text from PDF or DOCX
+# List of roles for the dropdown menu
+roles = [
+    "Quality Assurance", "Software Developer", "Data Analyst", "UI/UX Designer", 
+    "Project Manager", "Teacher", "Accountant", "Nurse", "Digital Marketer", 
+    "HR Manager", "Sales Executive", "Graphic Designer", "Chef", "Architect", 
+    "Writer", "Lawyer", "Business Analyst" 
+]
+
+# List of key sections typically found in a CV
+cv_sections = [
+    "Summary", "Skills", "Experience", "Projects", "Education", "Certifications"
+]
+
+# Define the keywords for different roles
+role_keywords = {
+    "Quality Assurance": ["test", "qa", "automation", "manual", "bug", "testing", "requirements", "quality", "methodology", "test case", "defect"],
+    "Software Developer": ["java", "python", "developer", "programming", "database", "coding", "framework", "api", "frontend", "backend", "git", "html", "css", "javascript"],
+    "Data Analyst": ["data analysis", "excel", "statistics", "data cleaning", "python", "R", "machine learning", "SQL", "data visualization", "graphs", "pivot tables"],
+    "UI/UX Designer": ["design", "user interface", "user experience", "Figma", "Adobe XD", "prototyping", "wireframes", "visual design", "interaction design", "responsive design"],
+    "Project Manager": ["project management", "agile", "scrum", "team leadership", "milestones", "stakeholder", "risk management", "project planning", "budget management", "schedule"],
+    "Teacher": ["teaching", "education", "students", "curriculum", "classroom", "subject", "lecture", "teaching methodologies", "class management"],
+    "Accountant": ["finance", "accounting", "ledger", "audit", "tax", "balance", "statements", "budget", "debit", "credit", "financial reporting", "accounts payable", "accounts receivable"],
+    "Nurse": ["patient care", "nursing", "medical", "healthcare", "hospital", "emergency", "medications", "clinical", "patient monitoring", "health assessment"],
+    "Digital Marketer": ["SEO", "social media", "PPC", "content marketing", "email marketing", "branding", "Google Ads", "Facebook Ads", "analytics", "marketing strategies"],
+    "HR Manager": ["recruitment", "employee relations", "performance management", "training", "staff development", "HR policies", "payroll", "labor laws"],
+    "Sales Executive": ["sales", "client relations", "CRM", "business development", "cold calling", "lead generation", "negotiation", "closing deals", "sales targets", "marketing strategies"],
+    "Graphic Designer": ["design", "Adobe Photoshop", "Illustrator", "vector graphics", "branding", "logo design", "illustration", "typography", "creative"],
+    "Chef": ["cooking", "culinary", "kitchen management", "food safety", "recipe creation", "menu planning", "food presentation", "quality control"],
+    "Architect": ["architecture", "design", "CAD", "blueprints", "building codes", "construction", "urban planning", "space planning", "3D modeling"],
+    "Writer": ["writing", "content creation", "blogging", "copywriting", "editing", "proofreading", "research", "creative writing", "storytelling"],
+    "Lawyer": ["law", "legal", "litigation", "contract", "court", "lawsuit", "defense", "plaintiff", "legal research", "advocacy", "negotiation"],
+    "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", 
+                         "agile", "scrum", "presentation", "wireframes"],
+
+}
+
 def extract_text_from_file(file_path):
     try:
         if file_path.endswith(".pdf"):
@@ -22,43 +57,59 @@ def extract_text_from_file(file_path):
         print(f"Error reading file: {e}")
         return None
 
-# Function to calculate a dummy score
-def calculate_score(text):
-    if not text:
-        return 0
-    keywords = ["python", "java", "team", "project", "experience", "development", "qa", "test"]
-    score = sum(word.lower() in text.lower() for word in keywords)
-    return min(score * 10, 100)
+def check_cv_sections(text):
+    sections_found = {section: False for section in cv_sections}
+    for section in cv_sections:
+        if section.lower() in text.lower():
+            sections_found[section] = True
+    return sections_found
 
-# Function triggered on Upload button
+def calculate_score(text, role):
+    if not text or role not in role_keywords:
+        return 0, {}
+
+    keywords = role_keywords[role]
+    found_keywords = [kw for kw in keywords if kw.lower() in text.lower()]
+    score = int((len(found_keywords) / len(keywords)) * 100)
+
+    feedback = {kw: ("✔️ Found" if kw in found_keywords else "❌ Missing") for kw in keywords}
+    return score, feedback
+
 def upload_file():
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
     
     if not file_path:
         return
     
-    # Check if the file is PDF or DOCX
     if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
         messagebox.showerror("Invalid File Type", "Please upload only PDF or DOCX files.")
         return
     
     text = extract_text_from_file(file_path)
     if text:
-        score = calculate_score(text)
-        score_label.config(text=f"Resume Score: {score}/100", fg=score_positive_color)
+        role = selected_role.get()
+        score, feedback = calculate_score(text, role)
+        sections_found = check_cv_sections(text)
+
+        result_text = f"🎯 Role: {role}\n📊 Resume Score: {score}/100\n\n"
+        result_text += "\n📑 CV Sections Check:\n"
+        for section, found in sections_found.items():
+            result_text += f"{section}: {'✔️ Found' if found else '❌ Missing'}\n"
+
+        score_label.config(text=result_text, fg=score_positive_color)
+        file_name_label.config(text=f"Uploaded File: {os.path.basename(file_path)}")
     else:
         score_label.config(text="Could not read content from file.", fg=error_color)
 
 # --- GUI Setup ---
 window = tk.Tk()
-window.title("Resume Scanner & Score Predictor")
+window.title("Universal Resume Scanner & Score Predictor")
 window.geometry("800x500")
 window.resizable(True, True)
+window.config(bg=frame_bg_color)
 
-# Load background image
 bg_image_path = r"D:\Projects\Resume-Scanner-Score-Predictor\Resume_Score_Project\resume.png"
 print(f"📂 Checking for image at: {bg_image_path}")
-
 bg_image_label = None
 
 def set_background_image(event=None):
@@ -66,7 +117,7 @@ def set_background_image(event=None):
     if os.path.exists(bg_image_path):
         print("Image found, loading background...")
         bg_image = Image.open(bg_image_path)
-        bg_image = bg_image.resize((event.width, event.height))  # Resize based on window size
+        bg_image = bg_image.resize((event.width, event.height))
         bg_image_tk = ImageTk.PhotoImage(bg_image)
 
         if bg_image_label:
@@ -76,32 +127,35 @@ def set_background_image(event=None):
             bg_image_label = tk.Label(window, image=bg_image_tk)
             bg_image_label.place(x=0, y=0, relwidth=1, relheight=1)
             bg_image_label.image = bg_image_tk
-        bg_image_label.lower()  
+        bg_image_label.lower()
     else:
         print("❌ Image not found! Please check the path and file name.")
 
-# Bind resize event to update background
 window.bind("<Configure>", set_background_image)
-
 window.after(100, set_background_image)
 
-# Main UI content
 frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief, padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-# Title label
-title_label = tk.Label(frame, text="Upload Your Resume", font=("Helvetica", 28, "bold"), fg="black")  # No bg color
-title_label.pack(pady=(20, 10))  # Close to the top, with some space
+title_label = tk.Label(frame, text="Upload Your Resume", font=("Helvetica", 28, "bold"), fg="black")
+title_label.pack(pady=(20, 10))
 
-# Update button text to say "Upload Here"
+# Role selection dropdown with enhanced visibility
+selected_role = tk.StringVar()
+role_dropdown = tk.OptionMenu(frame, selected_role, *roles)
+role_dropdown.config(font=label_font, width=20, relief="solid", bg=highlight_color, fg="black")  # Updated line
+role_dropdown.pack(pady=(10, 20))
+selected_role.set(roles[0])
+
 upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font, bg=button_color, fg="white", relief="raised", bd=5, width=20)
 upload_button.pack(pady=10)
 
-# Message to guide user about allowed file types
 file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Helvetica", 12), fg="gray", bg=frame_bg_color)
 file_type_message.pack(pady=(5, 20))
 
-# Score label
+file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Helvetica", 14), fg="black", bg=frame_bg_color)
+file_name_label.pack(pady=(5, 10))
+
 score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color, fg=score_color)
 score_label.pack(pady=20)
 
