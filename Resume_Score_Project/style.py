@@ -1,5 +1,5 @@
 # Color Scheme
-frame_bg_color = "#ffffff" 
+frame_bg_color = "#d5f4e6" 
 button_color = "#2980b9"  
 button_hover_color = "#3498db"  
 score_positive_color = "#27ae60" 

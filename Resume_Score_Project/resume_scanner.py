@@ -125,7 +125,7 @@ window.after(100, set_background_image)
 frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief, padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-title_label = tk.Label(frame, text="Upload Your Resume", font=("Segoe UI", 26, "bold"), fg=label_color, bg=frame_bg_color)
+title_label = tk.Label(frame, text="Resume Score Predictor", font=("Segoe UI", 26, "bold"), fg=label_color, bg=frame_bg_color)
 title_label.pack(pady=(10, 10))
 
 selected_role = tk.StringVar()
