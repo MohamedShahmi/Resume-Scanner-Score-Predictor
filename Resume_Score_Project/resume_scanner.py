@@ -7,10 +7,10 @@ import PyPDF2
 from style import *
 
 roles = [
-    "Quality Assurance", "Software Developer", "Data Analyst", "UI/UX Designer", 
-    "Project Manager", "Teacher", "Accountant", "Nurse", "Digital Marketer", 
-    "HR Manager", "Sales Executive", "Graphic Designer", "Chef", "Architect", 
-    "Writer", "Lawyer", "Business Analyst" 
+    "Quality Assurance", "Software Developer", "Data Analyst", "UI/UX Designer",
+    "Project Manager", "Teacher", "Accountant", "Nurse", "Digital Marketer",
+    "HR Manager", "Sales Executive", "Graphic Designer", "Chef", "Architect",
+    "Writer", "Lawyer", "Business Analyst"
 ]
 
 cv_sections = ["Summary", "Skills", "Experience", "Projects", "Education", "Certifications"]
@@ -32,8 +32,7 @@ role_keywords = {
     "Architect": ["architecture", "design", "CAD", "blueprints", "building codes", "construction", "urban planning", "space planning", "3D modeling"],
     "Writer": ["writing", "content creation", "blogging", "copywriting", "editing", "proofreading", "research", "creative writing", "storytelling"],
     "Lawyer": ["law", "legal", "litigation", "contract", "court", "lawsuit", "defense", "plaintiff", "legal research", "advocacy", "negotiation"],
-    "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", 
-                         "agile", "scrum", "presentation", "wireframes"],
+    "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", "agile", "scrum", "presentation", "wireframes"],
 }
 
 def extract_text_from_file(file_path):
@@ -69,6 +68,10 @@ def calculate_score(text, role):
     return score, feedback
 
 def upload_file():
+    if not selected_role.get() or selected_role.get() == "Select a job role":
+        messagebox.showwarning("Select Job Role", "Please choose a job role before uploading your resume.")
+        return
+
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
     if not file_path:
         return
@@ -93,7 +96,7 @@ def upload_file():
     else:
         score_label.config(text="Could not read content from file.", fg=error_color)
 
-# --- GUI Setup ---
+# GUI Setup
 window = tk.Tk()
 window.title("Universal Resume Scanner & Score Predictor")
 window.geometry("850x550")
@@ -122,28 +125,49 @@ def set_background_image(event=None):
 window.bind("<Configure>", set_background_image)
 window.after(100, set_background_image)
 
-frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief, padx=frame_padding[0], pady=frame_padding[1])
+frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief,
+                 padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-title_label = tk.Label(frame, text="Resume Score Predictor", font=("Segoe UI", 26, "bold"), fg=label_color, bg=frame_bg_color)
+title_label = tk.Label(frame, text="Resume Score Predictor", font=("Segoe UI", 26, "bold"),
+                       fg=label_color, bg=frame_bg_color)
 title_label.pack(pady=(10, 10))
 
+# Role Dropdown & Instruction Message
 selected_role = tk.StringVar()
-role_dropdown = tk.OptionMenu(frame, selected_role, *roles)
+
+# Update the instruction message
+instruction_label = tk.Label(frame, text="Please choose a job role before uploading your resume.",
+                             font=("Segoe UI", 12), fg="red", bg=frame_bg_color)
+instruction_label.pack(pady=(5, 0))
+
+def on_role_selected(*args):
+    if selected_role.get() != "Select a job role":
+        instruction_label.pack_forget()
+
+selected_role.trace("w", on_role_selected)
+
+# Add default option to dropdown
+role_dropdown = tk.OptionMenu(frame, selected_role, "Select a job role", *roles)
 role_dropdown.config(font=label_font, width=20, relief="raised", bg=highlight_color, fg="black", borderwidth=2)
 role_dropdown.pack(pady=(10, 20))
-selected_role.set(roles[0])
+selected_role.set("Select a job role")  # Set default option as "Select a job role"
 
-upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font, bg=button_color, fg="white", relief="raised", bd=button_borderwidth, width=button_width)
+upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font,
+                          bg=button_color, fg="white", relief="raised", bd=button_borderwidth,
+                          width=button_width)
 upload_button.pack(pady=10)
 
-file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Segoe UI", 11), fg="gray", bg=frame_bg_color)
+file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Segoe UI", 11),
+                             fg="gray", bg=frame_bg_color)
 file_type_message.pack(pady=(5, 15))
 
-file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Segoe UI", 12), fg=label_color, bg=frame_bg_color)
+file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Segoe UI", 12),
+                           fg=label_color, bg=frame_bg_color)
 file_name_label.pack(pady=(5, 10))
 
-score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color, fg=score_color, justify="left", anchor="w")
+score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color,
+                       fg=score_color, justify="left", anchor="w")
 score_label.pack(pady=20)
 
 window.mainloop()
