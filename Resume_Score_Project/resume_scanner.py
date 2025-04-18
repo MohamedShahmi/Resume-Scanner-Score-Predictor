@@ -4,9 +4,8 @@ from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 import docx
 import PyPDF2
-from style import *  
+from style import *
 
-# List of roles for the dropdown menu
 roles = [
     "Quality Assurance", "Software Developer", "Data Analyst", "UI/UX Designer", 
     "Project Manager", "Teacher", "Accountant", "Nurse", "Digital Marketer", 
@@ -14,12 +13,8 @@ roles = [
     "Writer", "Lawyer", "Business Analyst" 
 ]
 
-# List of key sections typically found in a CV
-cv_sections = [
-    "Summary", "Skills", "Experience", "Projects", "Education", "Certifications"
-]
+cv_sections = ["Summary", "Skills", "Experience", "Projects", "Education", "Certifications"]
 
-# Define the keywords for different roles
 role_keywords = {
     "Quality Assurance": ["test", "qa", "automation", "manual", "bug", "testing", "requirements", "quality", "methodology", "test case", "defect"],
     "Software Developer": ["java", "python", "developer", "programming", "database", "coding", "framework", "api", "frontend", "backend", "git", "html", "css", "javascript"],
@@ -39,7 +34,6 @@ role_keywords = {
     "Lawyer": ["law", "legal", "litigation", "contract", "court", "lawsuit", "defense", "plaintiff", "legal research", "advocacy", "negotiation"],
     "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", 
                          "agile", "scrum", "presentation", "wireframes"],
-
 }
 
 def extract_text_from_file(file_path):
@@ -71,20 +65,18 @@ def calculate_score(text, role):
     keywords = role_keywords[role]
     found_keywords = [kw for kw in keywords if kw.lower() in text.lower()]
     score = int((len(found_keywords) / len(keywords)) * 100)
-
     feedback = {kw: ("✔️ Found" if kw in found_keywords else "❌ Missing") for kw in keywords}
     return score, feedback
 
 def upload_file():
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
-    
     if not file_path:
         return
-    
+
     if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
         messagebox.showerror("Invalid File Type", "Please upload only PDF or DOCX files.")
         return
-    
+
     text = extract_text_from_file(file_path)
     if text:
         role = selected_role.get()
@@ -97,25 +89,23 @@ def upload_file():
             result_text += f"{section}: {'✔️ Found' if found else '❌ Missing'}\n"
 
         score_label.config(text=result_text, fg=score_positive_color)
-        file_name_label.config(text=f"Uploaded File: {os.path.basename(file_path)}")
+        file_name_label.config(text=f"📄 Uploaded File: {os.path.basename(file_path)}")
     else:
-        score_label.config(text="Could not read content from file.", fg=error_color)
+        score_label.config(text="❌ Could not read content from file.", fg=error_color)
 
 # --- GUI Setup ---
 window = tk.Tk()
 window.title("Universal Resume Scanner & Score Predictor")
-window.geometry("800x500")
+window.geometry("850x550")
 window.resizable(True, True)
-window.config(bg=frame_bg_color)
+window.config(bg=bg_color)
 
 bg_image_path = r"D:\Projects\Resume-Scanner-Score-Predictor\Resume_Score_Project\resume.png"
-print(f"📂 Checking for image at: {bg_image_path}")
 bg_image_label = None
 
 def set_background_image(event=None):
     global bg_image_label
     if os.path.exists(bg_image_path):
-        print("Image found, loading background...")
         bg_image = Image.open(bg_image_path)
         bg_image = bg_image.resize((event.width, event.height))
         bg_image_tk = ImageTk.PhotoImage(bg_image)
@@ -128,8 +118,6 @@ def set_background_image(event=None):
             bg_image_label.place(x=0, y=0, relwidth=1, relheight=1)
             bg_image_label.image = bg_image_tk
         bg_image_label.lower()
-    else:
-        print("❌ Image not found! Please check the path and file name.")
 
 window.bind("<Configure>", set_background_image)
 window.after(100, set_background_image)
@@ -137,26 +125,25 @@ window.after(100, set_background_image)
 frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief, padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-title_label = tk.Label(frame, text="Upload Your Resume", font=("Helvetica", 28, "bold"), fg="black")
-title_label.pack(pady=(20, 10))
+title_label = tk.Label(frame, text="Upload Your Resume", font=("Segoe UI", 26, "bold"), fg=label_color, bg=frame_bg_color)
+title_label.pack(pady=(10, 10))
 
-# Role selection dropdown with enhanced visibility
 selected_role = tk.StringVar()
 role_dropdown = tk.OptionMenu(frame, selected_role, *roles)
-role_dropdown.config(font=label_font, width=20, relief="solid", bg=highlight_color, fg="black")  # Updated line
+role_dropdown.config(font=label_font, width=20, relief="raised", bg=highlight_color, fg="black", borderwidth=2)
 role_dropdown.pack(pady=(10, 20))
 selected_role.set(roles[0])
 
-upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font, bg=button_color, fg="white", relief="raised", bd=5, width=20)
+upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font, bg=button_color, fg="white", relief="raised", bd=button_borderwidth, width=button_width)
 upload_button.pack(pady=10)
 
-file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Helvetica", 12), fg="gray", bg=frame_bg_color)
-file_type_message.pack(pady=(5, 20))
+file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Segoe UI", 11), fg="gray", bg=frame_bg_color)
+file_type_message.pack(pady=(5, 15))
 
-file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Helvetica", 14), fg="black", bg=frame_bg_color)
+file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Segoe UI", 12), fg=label_color, bg=frame_bg_color)
 file_name_label.pack(pady=(5, 10))
 
-score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color, fg=score_color)
+score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color, fg=score_color, justify="left", anchor="w")
 score_label.pack(pady=20)
 
 window.mainloop()
