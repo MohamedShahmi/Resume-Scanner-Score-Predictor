@@ -65,7 +65,7 @@ def calculate_score(text, role):
     keywords = role_keywords[role]
     found_keywords = [kw for kw in keywords if kw.lower() in text.lower()]
     score = int((len(found_keywords) / len(keywords)) * 100)
-    feedback = {kw: ("✔️ Found" if kw in found_keywords else "❌ Missing") for kw in keywords}
+    feedback = {kw: ("Found" if kw in found_keywords else "Missing") for kw in keywords}
     return score, feedback
 
 def upload_file():
@@ -83,15 +83,15 @@ def upload_file():
         score, feedback = calculate_score(text, role)
         sections_found = check_cv_sections(text)
 
-        result_text = f"🎯 Role: {role}\n📊 Resume Score: {score}/100\n\n"
-        result_text += "\n📑 CV Sections Check:\n"
+        result_text = f" Role: {role}\n Resume Score: {score}/100\n\n"
+        result_text += "\n CV Sections Check:\n"
         for section, found in sections_found.items():
-            result_text += f"{section}: {'✔️ Found' if found else '❌ Missing'}\n"
+            result_text += f"{section}: {'Found' if found else 'Missing'}\n"
 
         score_label.config(text=result_text, fg=score_positive_color)
-        file_name_label.config(text=f"📄 Uploaded File: {os.path.basename(file_path)}")
+        file_name_label.config(text=f" Uploaded File: {os.path.basename(file_path)}")
     else:
-        score_label.config(text="❌ Could not read content from file.", fg=error_color)
+        score_label.config(text="Could not read content from file.", fg=error_color)
 
 # --- GUI Setup ---
 window = tk.Tk()
