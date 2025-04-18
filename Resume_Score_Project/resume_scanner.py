@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from tkinterdnd2 import DND_FILES, TkinterDnD
 from PIL import Image, ImageTk
 import docx
 import PyPDF2
@@ -8,9 +9,9 @@ from style import *
 
 roles = [
     "Quality Assurance", "Software Developer", "Data Analyst", "UI/UX Designer",
-    "Project Manager", "Teacher", "Accountant", "Nurse", "Digital Marketer",
+    "Project Manager",  "Business Analyst", "Teacher", "Accountant", "Nurse", "Digital Marketer",
     "HR Manager", "Sales Executive", "Graphic Designer", "Chef", "Architect",
-    "Writer", "Lawyer", "Business Analyst"
+    "Writer", "Lawyer",
 ]
 
 cv_sections = ["Summary", "Skills", "Experience", "Projects", "Education", "Certifications"]
@@ -21,6 +22,7 @@ role_keywords = {
     "Data Analyst": ["data analysis", "excel", "statistics", "data cleaning", "python", "R", "machine learning", "SQL", "data visualization", "graphs", "pivot tables"],
     "UI/UX Designer": ["design", "user interface", "user experience", "Figma", "Adobe XD", "prototyping", "wireframes", "visual design", "interaction design", "responsive design"],
     "Project Manager": ["project management", "agile", "scrum", "team leadership", "milestones", "stakeholder", "risk management", "project planning", "budget management", "schedule"],
+    "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", "agile", "scrum", "presentation", "wireframes"],
     "Teacher": ["teaching", "education", "students", "curriculum", "classroom", "subject", "lecture", "teaching methodologies", "class management"],
     "Accountant": ["finance", "accounting", "ledger", "audit", "tax", "balance", "statements", "budget", "debit", "credit", "financial reporting", "accounts payable", "accounts receivable"],
     "Nurse": ["patient care", "nursing", "medical", "healthcare", "hospital", "emergency", "medications", "clinical", "patient monitoring", "health assessment"],
@@ -32,7 +34,6 @@ role_keywords = {
     "Architect": ["architecture", "design", "CAD", "blueprints", "building codes", "construction", "urban planning", "space planning", "3D modeling"],
     "Writer": ["writing", "content creation", "blogging", "copywriting", "editing", "proofreading", "research", "creative writing", "storytelling"],
     "Lawyer": ["law", "legal", "litigation", "contract", "court", "lawsuit", "defense", "plaintiff", "legal research", "advocacy", "negotiation"],
-    "Business Analyst": ["requirements gathering", "stakeholder", "data analysis", "business process", "gap analysis", "user stories", "JIRA", "workflow", "UML", "functional specification", "agile", "scrum", "presentation", "wireframes"],
 }
 
 def extract_text_from_file(file_path):
@@ -64,20 +65,12 @@ def calculate_score(text, role):
     keywords = role_keywords[role]
     found_keywords = [kw for kw in keywords if kw.lower() in text.lower()]
     score = int((len(found_keywords) / len(keywords)) * 100)
-    feedback = {kw: ("Found" if kw in found_keywords else "Missing") for kw in keywords}
+    feedback = {kw: ("Found ✅" if kw in found_keywords else "Missing ❌") for kw in keywords}
     return score, feedback
 
-def upload_file():
-    if not selected_role.get() or selected_role.get() == "Select a job role":
-        messagebox.showwarning("Select Job Role", "Please choose a job role before uploading your resume.")
-        return
-
-    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
-    if not file_path:
-        return
-
-    if not (file_path.endswith(".pdf") or file_path.endswith(".docx")):
-        messagebox.showerror("Invalid File Type", "Please upload only PDF or DOCX files.")
+def process_file(file_path):
+    if not file_path.lower().endswith(('.pdf', '.docx')):
+        messagebox.showerror("Invalid File Type", "Please upload only PDF or DOCX files. 📄")
         return
 
     text = extract_text_from_file(file_path)
@@ -86,19 +79,42 @@ def upload_file():
         score, feedback = calculate_score(text, role)
         sections_found = check_cv_sections(text)
 
-        result_text = f" Role: {role}\n Resume Score: {score}/100\n\n"
-        result_text += "\n CV Sections Check:\n"
+        result_text = f"📄 Role: {role}\n Resume Score: {score}/100\n\n"
+        result_text += "📝 CV Sections Check:\n"
         for section, found in sections_found.items():
-            result_text += f"{section}: {'Found' if found else 'Missing'}\n"
+            result_text += f"{section}: {'✅ Found' if found else '❌ Missing'}\n"
 
         score_label.config(text=result_text, fg=score_positive_color)
-        file_name_label.config(text=f" Uploaded File: {os.path.basename(file_path)}")
+        file_name_label.config(text=f"Uploaded File: {os.path.basename(file_path)}")
+
+        # Hide messages after successful upload
+        file_type_message.pack_forget()
+        drag_drop_message.pack_forget()
+
     else:
-        score_label.config(text="Could not read content from file.", fg=error_color)
+        score_label.config(text="❌ Could not read content from file.", fg=error_color)
+
+def upload_file():
+    if not selected_role.get() or selected_role.get() == "Select a job role":
+        messagebox.showwarning("Select Job Role", "Please choose a job role before uploading your resume. 📝")
+        return
+
+    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf"), ("Word files", "*.docx")])
+    if file_path:
+        process_file(file_path)
+
+def handle_drop(event):
+    if not selected_role.get() or selected_role.get() == "Select a job role":
+        messagebox.showwarning("Select Job Role", "Please choose a job role before uploading your resume. 📝")
+        return
+
+    file_path = event.data.strip("{}")
+    if file_path:
+        process_file(file_path)
 
 # GUI Setup
-window = tk.Tk()
-window.title("Universal Resume Scanner & Score Predictor")
+window = TkinterDnD.Tk()
+window.title("Universal Resume Scanner & Score Predictor 📄")
 window.geometry("850x550")
 window.resizable(True, True)
 window.config(bg=bg_color)
@@ -129,15 +145,13 @@ frame = tk.Frame(window, bg=frame_bg_color, bd=frame_border, relief=frame_relief
                  padx=frame_padding[0], pady=frame_padding[1])
 frame.place(relx=0.5, rely=0.5, anchor="center")
 
-title_label = tk.Label(frame, text="Resume Score Predictor", font=("Segoe UI", 26, "bold"),
+title_label = tk.Label(frame, text="Resume Score Predictor 📄", font=("Segoe UI", 26, "bold"),
                        fg=label_color, bg=frame_bg_color)
 title_label.pack(pady=(10, 10))
 
-# Role Dropdown & Instruction Message
 selected_role = tk.StringVar()
 
-# Update the instruction message
-instruction_label = tk.Label(frame, text="Please choose a job role before uploading your resume.",
+instruction_label = tk.Label(frame, text="Please choose a job role before uploading your resume. 📝",
                              font=("Segoe UI", 12), fg="red", bg=frame_bg_color)
 instruction_label.pack(pady=(5, 0))
 
@@ -147,20 +161,23 @@ def on_role_selected(*args):
 
 selected_role.trace("w", on_role_selected)
 
-# Add default option to dropdown
 role_dropdown = tk.OptionMenu(frame, selected_role, "Select a job role", *roles)
 role_dropdown.config(font=label_font, width=20, relief="raised", bg=highlight_color, fg="black", borderwidth=2)
-role_dropdown.pack(pady=(10, 20))
-selected_role.set("Select a job role")  # Set default option as "Select a job role"
+role_dropdown.pack(pady=(10, 5))
+selected_role.set("Select a job role")
 
-upload_button = tk.Button(frame, text="Upload Here", command=upload_file, font=button_font,
+upload_button = tk.Button(frame, text="Upload Here 📤", command=upload_file, font=button_font,
                           bg=button_color, fg="white", relief="raised", bd=button_borderwidth,
                           width=button_width)
-upload_button.pack(pady=10)
+upload_button.pack(pady=(10, 5))
 
-file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Segoe UI", 11),
+file_type_message = tk.Label(frame, text="(Only PDF and DOCX allowed)", font=("Segoe UI", 10),
                              fg="gray", bg=frame_bg_color)
-file_type_message.pack(pady=(5, 15))
+file_type_message.pack()
+
+drag_drop_message = tk.Label(frame, text="or Drag and Drop your file here", font=("Segoe UI", 11, "italic"),
+                             fg="#9370DB", bg=frame_bg_color)
+drag_drop_message.pack(pady=(5, 10))
 
 file_name_label = tk.Label(frame, text="No file uploaded yet", font=("Segoe UI", 12),
                            fg=label_color, bg=frame_bg_color)
@@ -169,5 +186,9 @@ file_name_label.pack(pady=(5, 10))
 score_label = tk.Label(frame, text="", font=score_font, bg=frame_bg_color,
                        fg=score_color, justify="left", anchor="w")
 score_label.pack(pady=20)
+
+# Register Drag and Drop
+window.drop_target_register(DND_FILES)
+window.dnd_bind('<<Drop>>', handle_drop)
 
 window.mainloop()
