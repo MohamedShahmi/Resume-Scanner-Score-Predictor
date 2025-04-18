@@ -1,13 +1,13 @@
 # Color Scheme
-frame_bg_color = "#ffffff"  # White frame for modern clean look
-button_color = "#2980b9"  # Blue button
-button_hover_color = "#3498db"  # Lighter blue hover
-score_positive_color = "#27ae60"  # Green for good score
-error_color = "#e74c3c"  # Red for errors
-score_color = "#2c3e50"  # Dark slate blue for score label
-label_color = "#2c3e50"  # Label color
-bg_color = "#ecf0f1"  # Soft gray background
-highlight_color = "#f1c40f"  # Bright yellow for dropdown
+frame_bg_color = "#ffffff" 
+button_color = "#2980b9"  
+button_hover_color = "#3498db"  
+score_positive_color = "#27ae60" 
+error_color = "#e74c3c"  
+score_color = "#2c3e50"  
+label_color = "#2c3e50" 
+bg_color = "#ecf0f1"  
+highlight_color = "#f1c40f" 
 
 # Font settings
 label_font = ("Segoe UI", 18, "bold")
